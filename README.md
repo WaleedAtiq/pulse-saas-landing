@@ -1,36 +1,25 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PULSE — Product Analytics SaaS Landing Page
 
-## Getting Started
+A premium, fully-responsive marketing site **concept** for a fictional product-analytics SaaS.
+Interactive dashboard demos, animated hand-built charts, feature tabs, and a live pricing toggle.
 
-First, run the development server:
+**Built by Waleed Atiq.** Concept build to showcase front-end development.
 
+**Planned stack:** Next.js · TypeScript · Tailwind CSS · GSAP ScrollTrigger · (optional) Lenis
+
+> This folder is pre-seeded with `CLAUDE.md` (the full build brief). Open the folder in Claude Code
+> and it will read that context automatically.
+
+## Getting started (in Claude Code)
+First prompt to use:
+> Read CLAUDE.md, then scaffold the Next.js app in this folder and start with the design tokens,
+> page shell, Nav, Footer, and the reusable SVG chart components. Explain each step as you go.
+
+## Run locally (after scaffolding)
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deploy to Vercel
+Push to GitHub → vercel.com → Add New Project → import repo → Deploy. No settings needed.

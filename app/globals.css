@@ -1,26 +1,494 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * ─── Design tokens ──────────────────────────────────────────────────────────
+ * The single source of truth for colors, radii, easing and the breakpoint.
+ * Tailwind v4 turns each token into utility classes automatically:
+ *   --color-accent        → bg-accent, text-accent, border-accent, fill-accent…
+ *   --radius-card         → rounded-card
+ *   --ease-out-soft       → ease-out-soft
+ *   --breakpoint-desktop  → the `desktop:` prefix (861px and up)
+ * Rule for the whole project: components use these names, never raw hex codes.
+ * To re-theme the site, change the values here and nothing else.
+ *
+ * "static" = always output every token as a CSS variable. By default Tailwind
+ * only outputs the ones it spots in class names, but the charts build names
+ * like var(--color-chart-3) in TypeScript, which Tailwind can't see.
+ */
+@theme static {
+  /* Surfaces, darkest → lightest */
+  --color-bg: #07070b; /* page background */
+  --color-bg-2: #0c0c13; /* alternate section background */
+  --color-panel: #111119; /* cards */
+  --color-panel-2: #181823; /* raised elements inside cards (tabs, inputs) */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* Text */
+  --color-ink: #f2f2f7; /* main text */
+  --color-muted: #8e8ea6; /* secondary text */
+  --color-faint: #565670; /* tertiary text, axis labels */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  /* Hairline borders (white at low opacity so they work on any dark surface) */
+  --color-line: rgb(255 255 255 / 0.07);
+  --color-line-strong: rgb(255 255 255 / 0.14);
+
+  /* The one brand accent (purple/indigo), plus a lighter tint for text on dark */
+  --color-accent: #7c5cff;
+  --color-accent-hi: #a593ff;
+
+  /* Chart series colors. The accent is always series 1; these are only for
+     charts that need to tell 2–3 things apart (e.g. a donut's segments). */
+  --color-chart-2: #4cc9f0;
+  --color-chart-3: #f472b6;
+
+  /* Status colors for metric deltas (+12% / −3%) */
+  --color-up: #34d399;
+  --color-down: #f87171;
+
+  --radius-card: 18px;
+
+  /* A smooth "fast then gentle" curve used by every chart draw-in */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Deep, soft shadow under the floating app windows → `shadow-window` */
+  --shadow-window: 0 40px 120px -40px rgb(0 0 0 / 0.85), 0 0 0 1px rgb(255 255 255 / 0.02);
+  /* Purple glow under the highlighted pricing card → `shadow-glow` */
+  --shadow-glow: 0 30px 80px -30px color-mix(in srgb, var(--color-accent) 55%, transparent);
+
+  /* Load-in animations → `animate-rise`, `animate-feed-in`.
+     Stagger them by setting animation-delay inline on each element. */
+  --animate-rise: rise 0.9s var(--ease-out-soft) both;
+  --animate-feed-in: feed-in 0.5s var(--ease-out-soft) both;
+  --animate-swap: swap 0.5s var(--ease-out-soft) both; /* feature tab content */
+  --animate-marquee: marquee 45s linear infinite; /* integrations rows */
+  --animate-blink: blink 1s steps(1) infinite; /* terminal cursor */
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
   }
+  /* The marquee track holds the tiles TWICE. Sliding it left by exactly half
+     (= one copy) lands on a frame identical to the start, so the loop is seamless. */
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
+  }
+  @keyframes swap {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes feed-in {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Single breakpoint, same as ECLIPSE: below 861px = mobile layout */
+  --breakpoint-desktop: 53.8125rem;
+}
+
+/*
+ * Fonts are loaded in layout.tsx with next/font, which exposes them as CSS
+ * variables on <html>. `@theme inline` is needed here because these tokens
+ * point at *other* variables — "inline" makes Tailwind copy the var() reference
+ * into each utility instead of resolving it too early.
+ */
+@theme inline {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+/* ─── Base styles ─────────────────────────────────────────────────────────── */
+html {
+  background: var(--color-bg);
+  color-scheme: dark; /* native scrollbars / form controls render dark too */
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-ink);
+}
+
+/* Visible keyboard focus everywhere (accessibility), invisible for mouse clicks */
+:focus-visible {
+  outline: 2px solid var(--color-accent-hi);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/*
+ * ─── Reusable component classes ─────────────────────────────────────────────
+ * Small named classes for patterns that repeat in every section. Kept as plain
+ * CSS (instead of long Tailwind class lists copied around) so the JSX stays
+ * short and readable — same approach as ECLIPSE.
+ */
+@layer components {
+  /* Centers content and applies the side gutters (16px mobile, 32px desktop) */
+  .container-x {
+    width: 100%;
+    max-width: 1200px;
+    margin-inline: auto;
+    padding-inline: 20px;
+  }
+  @media (min-width: 861px) {
+    .container-x {
+      padding-inline: 32px;
+    }
+  }
+
+  /* Vertical rhythm for every page section */
+  .section {
+    position: relative;
+    padding-block: 96px;
+  }
+  @media (min-width: 861px) {
+    .section {
+      padding-block: 140px;
+    }
+  }
+
+  /* Small label above a heading, e.g. "FEATURES" */
+  .eyebrow {
+    display: inline-block;
+    margin-bottom: 16px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-accent-hi);
+  }
+
+  .heading {
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.035em;
+    text-wrap: balance; /* browser evens out line lengths — no lonely last word */
+  }
+
+  .lead {
+    max-width: 560px;
+    color: var(--color-muted);
+    font-size: clamp(16px, 1.6vw, 18px);
+  }
+
+  /* Gradient text for highlighted words in headlines */
+  .text-gradient {
+    background: linear-gradient(90deg, var(--color-ink) 0%, var(--color-accent-hi) 60%, var(--color-chart-2) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Primary call-to-action button */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 44px;
+    padding-inline: 20px;
+    border-radius: 999px;
+    background: var(--color-accent);
+    color: var(--color-ink);
+    font-size: 14px;
+    font-weight: 500;
+    /* inset highlight on the top edge + soft purple glow underneath */
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.25),
+      0 8px 30px -10px var(--color-accent);
+    transition:
+      transform 0.2s,
+      box-shadow 0.2s,
+      background 0.2s;
+  }
+  .btn-primary:hover {
+    background: var(--color-accent-hi);
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.25),
+      0 12px 40px -10px var(--color-accent);
+  }
+
+  /* Secondary button: transparent with a thin border */
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 44px;
+    padding-inline: 20px;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 999px;
+    color: var(--color-ink);
+    font-size: 14px;
+    font-weight: 500;
+    transition:
+      background 0.2s,
+      border-color 0.2s;
+  }
+  .btn-ghost:hover {
+    background: rgb(255 255 255 / 0.04);
+    border-color: rgb(255 255 255 / 0.24);
+  }
+
+  /* Light button for use ON the gradient CTA band, where a purple button would vanish */
+  .btn-light {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 44px;
+    padding-inline: 20px;
+    border-radius: 999px;
+    background: var(--color-ink);
+    color: var(--color-bg);
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 10px 30px -10px rgb(0 0 0 / 0.5);
+    transition:
+      transform 0.2s,
+      background 0.2s;
+  }
+  .btn-light:hover {
+    background: white;
+    transform: translateY(-1px);
+  }
+
+  /* The final CTA band: a purple glow from the top, a cyan glow in the bottom-right
+     corner, over the panel color. Layered radial gradients = soft "lighting". */
+  .cta-band {
+    background:
+      radial-gradient(120% 130% at 50% -10%, color-mix(in srgb, var(--color-accent) 70%, transparent) 0%, transparent 60%),
+      radial-gradient(70% 90% at 100% 100%, color-mix(in srgb, var(--color-chart-2) 28%, transparent) 0%, transparent 60%),
+      var(--color-panel);
+  }
+
+  /* A smaller box INSIDE a card or dashboard (a stat tile, a chart area) */
+  .panel {
+    border: 1px solid var(--color-line);
+    border-radius: 12px;
+    background: rgb(255 255 255 / 0.015);
+  }
+
+  /* Hero background: a faint grid that fades out toward the bottom and edges.
+     Two 1px gradients draw the lines; the mask makes it fade. */
+  .bg-grid {
+    background-image:
+      linear-gradient(var(--color-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-line) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 20%, transparent 75%);
+  }
+
+  /* Ticking numbers flash green/red for a moment when they change
+     (LiveNumber.tsx sets data-trend, then removes it so the color fades back) */
+  .live-number {
+    transition: color 0.8s ease;
+  }
+  .live-number[data-trend="up"] {
+    color: var(--color-up);
+    transition: none;
+  }
+  .live-number[data-trend="down"] {
+    color: var(--color-down);
+    transition: none;
+  }
+
+  /* Rounded card with a thin border and a faint top-down sheen */
+  .card {
+    position: relative;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.025), transparent 40%), var(--color-panel);
+  }
+}
+
+/*
+ * ─── Scroll reveals ─────────────────────────────────────────────────────────
+ * Anything with class="reveal" starts hidden and slightly lower; ScrollEffects.tsx
+ * fades it up when it scrolls into view.
+ *
+ * The hidden state only applies when BOTH are true:
+ *  - scripting: enabled  → JavaScript is on (otherwise nothing would ever un-hide
+ *                          it, so no-JS visitors simply see everything)
+ *  - no-preference       → the visitor hasn't asked their OS to reduce motion
+ */
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+}
+
+/*
+ * ─── Chart draw-in animations ───────────────────────────────────────────────
+ * Every chart in components/charts/ starts "undrawn" and gets data-drawn="true"
+ * when it scrolls into view (see useInView.ts). The CSS below animates from the
+ * first state to the second, so the charts need no animation library at all.
+ */
+
+/* Lines: the path has pathLength="1", so a dash of length 1 covers the whole
+   line. Shifting that dash by 1 hides it; transitioning back to 0 "draws" it. */
+.chart-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1.6s var(--ease-out-soft);
+}
+[data-drawn="true"] .chart-line {
+  stroke-dashoffset: 0;
+}
+
+/* Area under a line, dots and labels: simple fade, slightly after the line */
+.chart-fade {
+  opacity: 0;
+  transition: opacity 0.9s ease 0.5s;
+}
+[data-drawn="true"] .chart-fade {
+  opacity: 1;
+}
+
+/* Bars grow up from the baseline. transform-box: fill-box makes
+   "bottom" mean the bottom of each bar, not the bottom of the whole SVG. */
+.chart-bar {
+  transform: scaleY(0);
+  transform-box: fill-box;
+  transform-origin: bottom;
+  transition: transform 0.9s var(--ease-out-soft);
+}
+[data-drawn="true"] .chart-bar {
+  transform: scaleY(1);
+}
+
+/* "Typing" text lines (How it works): each line is hidden by a clip-path that
+   covers it from the right, then uncovered in steps() — jumpy steps instead of
+   a smooth slide is what makes it look like characters being typed.
+   Each line sets its own start time with the --type-delay variable. */
+.type-line {
+  clip-path: inset(0 100% 0 0);
+}
+[data-drawn="true"] .type-line {
+  animation: type-in 0.9s steps(30, end) var(--type-delay, 0ms) both;
+}
+@keyframes type-in {
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* Horizontal bars (BarList): grow from the left edge */
+.chart-hbar {
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 1s var(--ease-out-soft);
+}
+[data-drawn="true"] .chart-hbar {
+  transform: scaleX(1);
+}
+
+/* Donut segments: same dash trick as lines. Each segment is a different length,
+   so DonutChart passes its own "hidden" offset in as the --arc-length variable. */
+.chart-arc {
+  stroke-dashoffset: var(--arc-length);
+  transition: stroke-dashoffset 1.2s var(--ease-out-soft);
+}
+[data-drawn="true"] .chart-arc {
+  stroke-dashoffset: 0;
+}
+
+/* The "live" dot on the newest data point: a ring that keeps expanding */
+.chart-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: chart-pulse 2s ease-out infinite;
+}
+@keyframes chart-pulse {
+  from {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  to {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+
+/* The ripple around the PULSE hub in "How it works" (a smaller cousin of .chart-pulse) */
+.hub-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hub-ring 2.4s ease-out infinite;
+}
+@keyframes hub-ring {
+  from {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  to {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* Users who set "reduce motion" in their OS see the finished charts instantly.
+   !important is deliberate: the charts set per-element transition timings as
+   inline styles, and this accessibility setting must win over those. */
+@media (prefers-reduced-motion: reduce) {
+  .chart-line,
+  .chart-fade,
+  .chart-bar,
+  .chart-hbar,
+  .chart-arc {
+    transition: none !important;
+  }
+  .animate-rise,
+  .animate-feed-in,
+  .animate-swap,
+  .animate-marquee,
+  .animate-blink {
+    animation: none;
+  }
+  .type-line {
+    clip-path: none !important;
+    animation: none !important;
+  }
+  .chart-pulse,
+  .hub-ring {
+    animation: none;
+    opacity: 0;
+  }
 }
