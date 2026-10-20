@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Logo from "./Logo";
+import ThemeToggle from "./ThemeToggle";
 
 // Each href matches the id="" of a section in app/page.tsx
 const LINKS = [
@@ -56,6 +57,7 @@ export default function Nav() {
         </ul>
 
         <div className="hidden items-center gap-5 desktop:flex">
+          <ThemeToggle className="-mr-2" />
           <a href="#" className="inline-block py-2 text-sm text-muted transition-colors hover:text-ink">
             Log in
           </a>
@@ -64,19 +66,22 @@ export default function Nav() {
           </a>
         </div>
 
-        {/* Mobile menu button: draws a ☰ or ✕ with two SVG lines */}
-        <button
-          type="button"
-          className="-mr-2 grid size-10 place-items-center desktop:hidden"
-          aria-label={open ? "Close menu" : "Open menu"}
-          aria-expanded={open}
-          aria-controls="mobile-menu"
-          onClick={() => setOpen((o) => !o)}
-        >
-          <svg viewBox="0 0 24 24" className="size-6 stroke-ink" fill="none" strokeWidth="1.8" strokeLinecap="round">
-            {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 8h16M4 16h16" />}
-          </svg>
-        </button>
+        {/* Mobile: theme switch + menu button (☰ / ✕ drawn with two SVG lines) */}
+        <div className="flex items-center gap-1 desktop:hidden">
+          <ThemeToggle />
+          <button
+            type="button"
+            className="-mr-2 grid size-10 place-items-center"
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            aria-controls="mobile-menu"
+            onClick={() => setOpen((o) => !o)}
+          >
+            <svg viewBox="0 0 24 24" className="size-6 stroke-ink" fill="none" strokeWidth="1.8" strokeLinecap="round">
+              {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 8h16M4 16h16" />}
+            </svg>
+          </button>
+        </div>
       </nav>
 
       {/* Mobile menu: tapping any link closes it */}

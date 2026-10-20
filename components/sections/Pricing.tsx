@@ -1,8 +1,10 @@
 import PricingTable from "@/components/pricing/PricingTable";
+import ComparisonTable from "@/components/pricing/ComparisonTable";
 
 /*
- * Pricing: heading, the interactive PricingTable (toggle + 3 tiers), and an
- * Enterprise strip for customers who outgrow the self-serve plans.
+ * Pricing: heading, the interactive PricingTable (toggle + 3 tiers), an
+ * Enterprise strip for customers who outgrow the self-serve plans, and the
+ * expandable "Compare all features" table.
  */
 export default function Pricing() {
   return (
@@ -10,7 +12,7 @@ export default function Pricing() {
       {/* Glow behind the highlighted middle card */}
       <div
         aria-hidden="true"
-        className="absolute left-1/2 top-1/2 -z-10 h-[500px] w-[600px] max-w-full -translate-x-1/2 rounded-full bg-accent/10 blur-[120px]"
+        className="glow absolute left-1/2 top-[calc(50%-120px)] -z-10 h-[740px] w-[840px] max-w-full -translate-x-1/2 text-accent [--glow-strength:12%]"
       />
 
       <div className="container-x">
@@ -34,10 +36,13 @@ export default function Pricing() {
               1B+ events a month, custom contracts, SAML SSO, audit logs and a dedicated success manager.
             </p>
           </div>
-          <a href="#" className="btn-ghost shrink-0">
+          {/* data-demo-trigger opens the "Book a demo" dialog (DemoRequest.tsx) */}
+          <button type="button" data-demo-trigger className="btn-ghost shrink-0">
             Talk to sales <span aria-hidden="true">→</span>
-          </a>
+          </button>
         </div>
+
+        <ComparisonTable />
 
         <p className="reveal mt-6 text-center text-xs text-faint">Prices in USD, excluding tax. Concept pricing for a fictional product.</p>
       </div>

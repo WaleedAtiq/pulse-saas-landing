@@ -13,7 +13,7 @@ export default function Logo() {
           strokeWidth="2.4"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="stroke-ink"
+          className="stroke-on-accent"
         />
       </svg>
       <span className="text-[17px] font-semibold tracking-[0.12em]">PULSE</span>

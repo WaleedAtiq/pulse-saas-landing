@@ -16,8 +16,8 @@ export default function Hero() {
     <section className="relative isolate overflow-hidden pb-24 pt-32 desktop:pb-36 desktop:pt-40">
       {/* Background: faint grid + two soft color glows */}
       <div aria-hidden="true" className="bg-grid absolute inset-0 -z-10" />
-      <div aria-hidden="true" className="absolute -right-40 top-24 -z-10 h-[520px] w-[720px] rounded-full bg-accent/20 blur-[130px]" />
-      <div aria-hidden="true" className="absolute -left-40 -top-40 -z-10 h-[420px] w-[520px] rounded-full bg-chart-2/10 blur-[130px]" />
+      <div aria-hidden="true" className="glow absolute -right-[290px] -top-[34px] -z-10 h-[780px] w-[980px] text-accent [--glow-strength:22%]" />
+      <div aria-hidden="true" className="glow absolute -left-[290px] -top-[290px] -z-10 h-[680px] w-[780px] text-chart-2 [--glow-strength:12%]" />
 
       {/* grid-cols-1 = minmax(0, 1fr): on mobile the single column may never grow
           wider than the screen, even if something inside it can't shrink */}

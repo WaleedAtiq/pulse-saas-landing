@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import DashboardFrame from "./DashboardFrame";
 import StatTile from "./StatTile";
 import LiveNumber from "./LiveNumber";
@@ -5,7 +8,16 @@ import LiveDot from "./LiveDot";
 import LineChart from "@/components/charts/LineChart";
 import BarChart from "@/components/charts/BarChart";
 import BarList from "@/components/charts/BarList";
-import { activeUsers, activeUsersPrevious, eventsByHour, last30Days, topEvents } from "@/lib/mockData";
+import { formatValue } from "@/lib/format";
+import { HERO_RANGES, eventsByHour, topEvents, type HeroRange } from "@/lib/mockData";
+
+const RANGE_OPTIONS: { id: HeroRange; label: string; long: string }[] = [
+  { id: "7d", label: "7D", long: "7 days" },
+  { id: "30d", label: "30D", long: "30 days" },
+  { id: "90d", label: "90D", long: "90 days" },
+];
+
+const average = (values: number[]) => values.reduce((sum, v) => sum + v, 0) / values.length;
 
 // Sidebar icons (simple 24×24 line drawings). The first one is "active".
 const NAV_ICONS = [
@@ -17,14 +29,25 @@ const NAV_ICONS = [
 ];
 
 /*
- * The fake analytics app shown in the Hero. A Server Component: it only lays
- * things out. The parts that move (charts, LiveNumber) are Client Components
- * nested inside, so only they ship JavaScript to the browser.
+ * The fake analytics app shown in the Hero.
+ *
+ * It's a Client Component because of the 7D / 30D / 90D switcher: the chosen
+ * range is state, and changing it updates the KPIs and redraws the main chart.
+ * The headline number and its change are CALCULATED from the chart data (not
+ * typed in), so they can never disagree with what the chart shows.
  *
  * Mobile shows the KPI row + main chart; the sidebar and bottom row appear
  * from 861px up, where there's room for them.
  */
 export default function HeroDashboard() {
+  const [range, setRange] = useState<HeroRange>("30d");
+  const [switched, setSwitched] = useState(false); // after a click, redraw without the on-load delay
+  const data = HERO_RANGES[range];
+  const rangeName = RANGE_OPTIONS.find((r) => r.id === range)!.long;
+
+  const avgNow = average(data.current);
+  const change = (avgNow / average(data.previous) - 1) * 100;
+
   return (
     <DashboardFrame path="app.pulse.dev/acme/overview">
       <div className="flex">
@@ -43,28 +66,57 @@ export default function HeroDashboard() {
         </nav>
 
         <div className="min-w-0 flex-1 space-y-3 p-3 desktop:p-4">
-          {/* Page header */}
-          <div className="flex items-center justify-between px-1">
+          {/* Page header with the date-range switcher */}
+          <div className="flex items-center justify-between gap-3 px-1">
             <div className="text-sm font-medium">Overview</div>
-            <div className="rounded-md border border-line px-2 py-1 text-[11px] text-muted">Last 30 days</div>
+            <div role="group" aria-label="Date range" className="flex rounded-md border border-line p-0.5">
+              {RANGE_OPTIONS.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  aria-pressed={range === option.id}
+                  // The spoken name must START with the visible text ("7D"), so people using
+                  // voice control can say "click 7D" — WCAG's "label in name" rule
+                  aria-label={`${option.label}, last ${option.long}`}
+                  onClick={() => {
+                    setRange(option.id);
+                    setSwitched(true);
+                  }}
+                  className={`rounded px-2 py-1 text-[11px] font-medium transition-colors ${
+                    range === option.id ? "bg-panel-2 text-ink" : "text-muted hover:text-ink"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* KPI row — the first tile ticks live. Two tiles on mobile (three
               don't fit legibly on a phone), the third joins from 861px up. */}
           <div className="grid grid-cols-2 gap-2 desktop:grid-cols-3 desktop:gap-3">
             <StatTile label={<LiveDot label="Online now" />} value={<LiveNumber value={1284} />} delta="+12% vs. avg" />
-            <StatTile label="Conversion" value="4.8%" delta="+0.6pt" />
-            <StatTile label="Avg. session" value="6m 12s" delta="−3%" trend="down" className="hidden desktop:block" />
+            <StatTile label="Conversion" value={data.conversion} delta={data.conversionDelta} />
+            <StatTile
+              label="Avg. session"
+              value={data.session}
+              delta={data.sessionDelta}
+              trend={data.sessionTrend}
+              className="hidden desktop:block"
+            />
           </div>
 
           {/* Main chart */}
           <div className="panel p-3 desktop:p-4">
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
-                <div className="text-[11px] text-muted">Active users</div>
+                <div className="text-[11px] text-muted">Avg. daily active users · {rangeName}</div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-xl font-semibold tracking-tight tabular-nums">24.1K</span>
-                  <span className="text-[11px] font-medium text-up">+40.9%</span>
+                  <span className="text-xl font-semibold tracking-tight tabular-nums">{formatValue(avgNow, "compact")}</span>
+                  <span className={`text-[11px] font-medium ${change >= 0 ? "text-up" : "text-down"}`}>
+                    {change >= 0 ? "+" : "−"}
+                    {Math.abs(change).toFixed(1)}%
+                  </span>
                 </div>
               </div>
               {/* Legend */}
@@ -77,16 +129,18 @@ export default function HeroDashboard() {
                 </span>
               </div>
             </div>
+            {/* key={range}: a new range mounts a fresh chart, so it draws in again */}
             <LineChart
-              label="Daily active users over the last 30 days, rising from 12,400 to 24,100"
+              key={range}
+              label={`Daily active users over the last ${rangeName}, averaging ${formatValue(avgNow, "compact")}`}
               series={[
-                { name: "This period", values: activeUsers },
-                { name: "Previous", values: activeUsersPrevious, color: "muted" },
+                { name: "This period", values: data.current },
+                { name: "Previous", values: data.previous, color: "muted" },
               ]}
-              labels={last30Days}
+              labels={data.labels}
               height={210}
               live
-              delay={500}
+              delay={switched ? 0 : 500}
             />
           </div>
 

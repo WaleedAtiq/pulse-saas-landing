@@ -5,18 +5,58 @@ import type { ChartColor } from "@/components/charts/chartMath";
 /*
  * All the fake numbers behind the demo dashboards.
  *
- * They are written out by hand on purpose — NOT generated with Math.random().
- * Next.js renders the page on the server first, then React "hydrates" it in the
- * browser. Random numbers would differ between the two and React would throw
- * a hydration mismatch error. Fixed data also means the demo looks the same
- * (and equally good) for every visitor.
+ * Never generated with Math.random(): Next.js renders the page on the server
+ * first, then React "hydrates" it in the browser. Random numbers would differ
+ * between the two and React would throw a hydration mismatch error. Most data
+ * is written out by hand; the longer 90-day series uses a SEEDED generator
+ * (below), which gives the same "random-looking" numbers every time.
  */
 
+/* ─── Helpers for generated (but repeatable) data ──────────────────────────── */
+
+// Month names written out, instead of toLocaleDateString(), so the server and
+// every browser produce exactly the same text (no hydration mismatch).
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** `n` daily labels ending on Oct 16, 2026 — e.g. dayLabels(3) → ["Oct 14", "Oct 15", "Oct 16"] */
+export function dayLabels(n: number): string[] {
+  const end = Date.UTC(2026, 9, 16); // months count from 0, so 9 = October
+  return Array.from({ length: n }, (_, i) => {
+    const day = new Date(end - (n - 1 - i) * 86_400_000); // 86,400,000 ms = one day
+    return `${MONTHS[day.getUTCMonth()]} ${day.getUTCDate()}`;
+  });
+}
+
+/**
+ * A tiny SEEDED random number generator (the well-known "mulberry32").
+ * It looks random, but the same seed always produces the same sequence — on
+ * the server and in every browser. That's what makes it safe here, where
+ * Math.random() would not be: both sides compute identical charts.
+ */
+function seededRandom(seed: number) {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296; // a number between 0 and 1
+  };
+}
+
+/** `n` days of a metric rising from `from` to `to`, with quieter weekends and ±3% noise */
+function trendSeries(n: number, from: number, to: number, seed: number): number[] {
+  const random = seededRandom(seed);
+  return Array.from({ length: n }, (_, i) => {
+    const base = from + ((to - from) * i) / (n - 1);
+    const weekend = i % 7 === 5 || i % 7 === 6 ? 0.94 : 1;
+    const noise = 1 + (random() - 0.5) * 0.06;
+    return Math.round((base * weekend * noise) / 100) * 100; // round to hundreds, like the hand-written data
+  });
+}
+
+/* ─── Hand-written 30-day data ─────────────────────────────────────────────── */
+
 /** "Sep 17" … "Oct 16": 30 daily labels for the charts' x-axis */
-export const last30Days: string[] = [
-  ...Array.from({ length: 14 }, (_, i) => `Sep ${17 + i}`),
-  ...Array.from({ length: 16 }, (_, i) => `Oct ${1 + i}`),
-];
+export const last30Days: string[] = dayLabels(30);
 
 /** Daily active users over the last 30 days — a healthy upward trend with weekly dips */
 export const activeUsers: number[] = [
@@ -127,3 +167,56 @@ export const topCountries: BarDatum[] = [
   { label: "India", value: 5800 },
   { label: "Brazil", value: 3100 },
 ];
+
+/* ─── Hero date-range switcher (7D / 30D / 90D) ────────────────────────────── */
+
+export type HeroRange = "7d" | "30d" | "90d";
+
+type RangeData = {
+  labels: string[];
+  current: number[]; // daily active users in this period
+  previous: number[]; // the period before, for the comparison line
+  conversion: string;
+  conversionDelta: string;
+  session: string;
+  sessionDelta: string;
+  sessionTrend: "up" | "down";
+};
+
+/*
+ * The three ranges agree with each other, like a real product's would:
+ * 7D is the last 7 days of the 30-day series, and the 90-day series ENDS with
+ * those same 30 days (60 generated days are put in front of them).
+ */
+export const HERO_RANGES: Record<HeroRange, RangeData> = {
+  "7d": {
+    labels: dayLabels(7),
+    current: activeUsers.slice(-7),
+    previous: activeUsersPrevious.slice(-7),
+    conversion: "5.1%",
+    conversionDelta: "+0.9pt",
+    session: "6m 40s",
+    sessionDelta: "+4%",
+    sessionTrend: "up",
+  },
+  "30d": {
+    labels: last30Days,
+    current: activeUsers,
+    previous: activeUsersPrevious,
+    conversion: "4.8%",
+    conversionDelta: "+0.6pt",
+    session: "6m 12s",
+    sessionDelta: "−3%",
+    sessionTrend: "down",
+  },
+  "90d": {
+    labels: dayLabels(90),
+    current: [...trendSeries(60, 6200, 12100, 7), ...activeUsers],
+    previous: trendSeries(90, 5400, 11800, 11),
+    conversion: "4.3%",
+    conversionDelta: "+1.2pt",
+    session: "5m 58s",
+    sessionDelta: "+7%",
+    sessionTrend: "up",
+  },
+};

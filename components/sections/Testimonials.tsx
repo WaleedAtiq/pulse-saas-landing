@@ -65,7 +65,7 @@ export default function Testimonials() {
           ))}
         </ul>
 
-        <p className="reveal mt-8 text-center text-[11px] text-faint/70">
+        <p className="reveal mt-8 text-center text-[11px] text-faint">
           Concept testimonials — the people and companies are fictional.
         </p>
       </div>

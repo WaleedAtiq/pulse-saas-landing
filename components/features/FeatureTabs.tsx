@@ -116,7 +116,7 @@ export default function FeatureTabs() {
         {/* The window frame stays put; only its contents swap (and redraw) */}
         <div className="relative">
           {/* Soft accent glow behind the window */}
-          <div aria-hidden="true" className="absolute inset-x-10 -inset-y-6 -z-10 rounded-full bg-accent/15 blur-[90px]" />
+          <div aria-hidden="true" className="glow absolute -inset-x-12 -inset-y-28 -z-10 text-accent [--glow-strength:18%]" />
           <DashboardFrame path={active.path}>
             {/* min-height stops the page jumping when previews differ in height */}
             <div key={active.id} className="animate-swap p-3 desktop:min-h-[470px] desktop:p-4">

@@ -82,7 +82,7 @@ export default function SocialProof() {
         </ul>
 
         {/* Honesty note: this is a portfolio concept, not real customers */}
-        <p className="reveal mt-9 text-center text-[11px] text-faint/70">Fictional brands — concept build.</p>
+        <p className="reveal mt-9 text-center text-[11px] text-faint">Fictional brands — concept build.</p>
       </div>
     </section>
   );

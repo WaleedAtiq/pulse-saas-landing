@@ -10,7 +10,9 @@ import HowItWorks from "@/components/sections/HowItWorks";
 import Integrations from "@/components/sections/Integrations";
 import Pricing from "@/components/sections/Pricing";
 import Testimonials from "@/components/sections/Testimonials";
+import FAQ from "@/components/sections/FAQ";
 import CTA from "@/components/sections/CTA";
+import DemoRequest from "@/components/demo/DemoRequest";
 
 /*
  * The page shell: Nav on top, sections in <main>, Footer at the bottom.
@@ -36,10 +38,14 @@ export default function Home() {
         <Integrations />
         <Pricing />
         <Testimonials />
+        <FAQ />
         <CTA />
       </main>
 
       <Footer />
+
+      {/* The "Book a demo" dialog — mounted once, opened by any [data-demo-trigger] button */}
+      <DemoRequest />
     </>
   );
 }

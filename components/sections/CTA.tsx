@@ -41,9 +41,10 @@ export default function CTA() {
             <a href="#pricing" className="btn-light h-12 px-6">
               Start free <span aria-hidden="true">→</span>
             </a>
-            <a href="#" className="btn-ghost h-12 border-ink/30 px-6 hover:border-ink/60">
+            {/* data-demo-trigger opens the "Book a demo" dialog (DemoRequest.tsx) */}
+            <button type="button" data-demo-trigger className="btn-ghost h-12 border-ink/30 px-6 hover:border-ink/60">
               Book a demo
-            </a>
+            </button>
           </div>
 
           <ul className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-[13px] text-ink/70">

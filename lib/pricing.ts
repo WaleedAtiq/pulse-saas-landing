@@ -65,3 +65,39 @@ export const TIERS: Tier[] = [
 export function pricePerMonth(tier: Tier, billing: Billing): number {
   return billing === "yearly" ? Math.round(tier.monthly * (1 - YEARLY_DISCOUNT)) : tier.monthly;
 }
+
+/*
+ * The "Compare all features" table under the pricing cards.
+ * Each row's `values` are in the SAME ORDER as TIERS above: [Starter, Growth, Scale].
+ * true = included (✓), false = not included (—), text = shown as-is.
+ */
+export type ComparisonValue = boolean | string;
+
+export const COMPARISON: { group: string; rows: { feature: string; values: [ComparisonValue, ComparisonValue, ComparisonValue] }[] }[] = [
+  {
+    group: "Usage",
+    rows: [
+      { feature: "Events per month", values: ["10M", "50M", "250M"] },
+      { feature: "Data history", values: ["7 days", "12 months", "Unlimited"] },
+      { feature: "Team seats", values: ["3", "Unlimited", "Unlimited"] },
+    ],
+  },
+  {
+    group: "Analysis",
+    rows: [
+      { feature: "Funnels & retention", values: [true, true, true] },
+      { feature: "Dashboards", values: ["3", "Unlimited", "Unlimited"] },
+      { feature: "Real-time streams & alerts", values: [false, true, true] },
+      { feature: "Saved segments", values: [false, true, true] },
+      { feature: "SQL export & warehouse sync", values: [false, false, true] },
+    ],
+  },
+  {
+    group: "Security & support",
+    rows: [
+      { feature: "SSO & role-based access", values: [false, false, true] },
+      { feature: "Uptime SLA", values: [false, false, "99.9%"] },
+      { feature: "Support", values: ["Community", "Email", "Priority"] },
+    ],
+  },
+];

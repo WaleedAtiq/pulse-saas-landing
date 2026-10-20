@@ -30,7 +30,7 @@ export default function Metrics() {
       {/* Soft accent glow across the middle of the band */}
       <div
         aria-hidden="true"
-        className="absolute left-1/2 top-1/2 -z-10 h-[300px] w-[900px] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/10 blur-[110px]"
+        className="glow absolute left-1/2 top-1/2 -z-10 h-[520px] w-[1120px] max-w-full -translate-x-1/2 -translate-y-1/2 text-accent [--glow-strength:12%]"
       />
 
       <div className="container-x">

@@ -25,15 +25,17 @@
   /* Text */
   --color-ink: #f2f2f7; /* main text */
   --color-muted: #8e8ea6; /* secondary text */
-  --color-faint: #565670; /* tertiary text, axis labels */
+  --color-faint: #80809a; /* tertiary text, axis labels — lightest grey that still passes WCAG AA (4.5:1) on every dark surface */
 
   /* Hairline borders (white at low opacity so they work on any dark surface) */
   --color-line: rgb(255 255 255 / 0.07);
   --color-line-strong: rgb(255 255 255 / 0.14);
 
   /* The one brand accent (purple/indigo), plus a lighter tint for text on dark */
-  --color-accent: #7c5cff;
+  --color-accent: #7756ff; /* white text on it = 4.6:1, passes WCAG AA */
   --color-accent-hi: #a593ff;
+  /* Text/icons placed ON the accent (e.g. the purple button) — white in both themes */
+  --color-on-accent: #ffffff;
 
   /* Chart series colors. The accent is always series 1; these are only for
      charts that need to tell 2–3 things apart (e.g. a donut's segments). */
@@ -113,6 +115,46 @@
 }
 
 /*
+ * ─── Light theme ────────────────────────────────────────────────────────────
+ * Dark is PULSE's default. When the visitor picks light (ThemeToggle.tsx sets
+ * data-theme="light" on <html>), these values replace the tokens above.
+ * Because every component uses tokens — never raw colors — this one block
+ * re-themes the whole site, charts included.
+ *
+ * Not simply "inverted": text greys and the accent are darker than their dark-
+ * theme versions so they stay readable on white (WCAG contrast).
+ */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --color-bg: #f6f6f9;
+  --color-bg-2: #eeeef4;
+  --color-panel: #ffffff;
+  --color-panel-2: #f2f2f7;
+
+  --color-ink: #121218;
+  --color-muted: #55556a;
+  --color-faint: #6c6c82;
+
+  --color-line: rgb(18 18 40 / 0.09);
+  --color-line-strong: rgb(18 18 40 / 0.16);
+
+  --color-accent: #6a4cf5;
+  --color-accent-hi: #5536e0;
+
+  --color-chart-2: #0891b2;
+  --color-chart-3: #db2777;
+
+  --color-up: #059669;
+  --color-down: #dc2626;
+
+  --shadow-window: 0 30px 80px -30px rgb(40 30 90 / 0.28), 0 0 0 1px rgb(18 18 40 / 0.03);
+}
+
+/* `light:` variant for Tailwind classes, e.g. `light:hidden` (used for the sun/moon icon swap) */
+@custom-variant light (&:where([data-theme="light"], [data-theme="light"] *));
+
+/*
  * Fonts are loaded in layout.tsx with next/font, which exposes them as CSS
  * variables on <html>. `@theme inline` is needed here because these tokens
  * point at *other* variables — "inline" makes Tailwind copy the var() reference
@@ -126,7 +168,7 @@
 /* ─── Base styles ─────────────────────────────────────────────────────────── */
 html {
   background: var(--color-bg);
-  color-scheme: dark; /* native scrollbars / form controls render dark too */
+  color-scheme: dark; /* native scrollbars / form controls match the theme (light overrides this) */
 }
 
 body {
@@ -140,7 +182,7 @@ body {
 
 ::selection {
   background: var(--color-accent);
-  color: var(--color-ink);
+  color: var(--color-on-accent);
 }
 
 /* Visible keyboard focus everywhere (accessibility), invisible for mouse clicks */
@@ -224,7 +266,7 @@ body {
     padding-inline: 20px;
     border-radius: 999px;
     background: var(--color-accent);
-    color: var(--color-ink);
+    color: var(--color-on-accent);
     font-size: 14px;
     font-weight: 500;
     /* inset highlight on the top edge + soft purple glow underneath */
@@ -261,9 +303,10 @@ body {
       background 0.2s,
       border-color 0.2s;
   }
+  /* Hover tints use the text color, so they work on dark AND light backgrounds */
   .btn-ghost:hover {
-    background: rgb(255 255 255 / 0.04);
-    border-color: rgb(255 255 255 / 0.24);
+    background: color-mix(in srgb, var(--color-ink) 5%, transparent);
+    border-color: color-mix(in srgb, var(--color-ink) 28%, transparent);
   }
 
   /* Light button for use ON the gradient CTA band, where a purple button would vanish */
@@ -285,7 +328,7 @@ body {
       background 0.2s;
   }
   .btn-light:hover {
-    background: white;
+    background: color-mix(in srgb, var(--color-ink) 88%, var(--color-accent));
     transform: translateY(-1px);
   }
 
@@ -298,11 +341,58 @@ body {
       var(--color-panel);
   }
 
+  /* Form inputs (the "Book a demo" form): one shared look for input, select, textarea */
+  .field {
+    width: 100%;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    background: var(--color-bg);
+    padding: 10px 12px;
+    color: var(--color-ink);
+    font-size: 15px; /* 15px+ stops iOS Safari zooming in when the field is focused */
+    transition:
+      border-color 0.2s,
+      box-shadow 0.2s;
+  }
+  .field::placeholder {
+    color: var(--color-faint);
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 25%, transparent);
+  }
+  .field[aria-invalid="true"] {
+    border-color: var(--color-down);
+  }
+  textarea.field {
+    resize: vertical;
+  }
+
+  /* On the light theme the CTA glow is softer, so the dark heading stays readable */
+  :root[data-theme="light"] .cta-band {
+    background:
+      radial-gradient(120% 130% at 50% -10%, color-mix(in srgb, var(--color-accent) 28%, transparent) 0%, transparent 60%),
+      radial-gradient(70% 90% at 100% 100%, color-mix(in srgb, var(--color-chart-2) 16%, transparent) 0%, transparent 60%),
+      var(--color-panel);
+  }
+
   /* A smaller box INSIDE a card or dashboard (a stat tile, a chart area) */
   .panel {
     border: 1px solid var(--color-line);
     border-radius: 12px;
     background: rgb(255 255 255 / 0.015);
+  }
+
+  /* Soft color glow behind sections. A radial gradient fading to transparent —
+     it looks like a big blurred circle, but costs almost nothing to draw.
+     (The obvious alternative, a div with filter: blur(130px), is one of the
+     most expensive things a phone can paint: it slowed mobile load measurably.)
+     Color comes from the element's text color (e.g. `text-accent`), strength
+     from --glow-strength: <div class="glow text-accent [--glow-strength:20%]"> */
+  .glow {
+    pointer-events: none;
+    background: radial-gradient(closest-side, color-mix(in srgb, currentColor var(--glow-strength, 20%), transparent), transparent);
   }
 
   /* Hero background: a faint grid that fades out toward the bottom and edges.
@@ -490,5 +580,69 @@ body {
   .hub-ring {
     animation: none;
     opacity: 0;
+  }
+}
+
+/*
+ * ─── "Book a demo" dialog ───────────────────────────────────────────────────
+ * The native <dialog> (see DemoRequest.tsx). ::backdrop is the dimmed layer
+ * the browser draws behind a modal dialog.
+ */
+.demo-dialog {
+  width: min(520px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+  overflow-y: auto;
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-card);
+  background: var(--color-panel);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-window);
+}
+.demo-dialog[open] {
+  animation: dialog-in 0.35s var(--ease-out-soft);
+}
+.demo-dialog::backdrop {
+  background: color-mix(in srgb, var(--color-bg) 70%, transparent);
+  backdrop-filter: blur(6px);
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+}
+/* While the dialog is open, the page behind it shouldn't scroll */
+html:has(.demo-dialog[open]) {
+  overflow: hidden;
+}
+
+/*
+ * ─── FAQ accordion animation ───────────────────────────────────────────────
+ * ::details-content is the part of <details> that opens and closes.
+ * interpolate-size lets the browser animate to "auto" height. Browsers that
+ * don't support these yet just open instantly — progressive enhancement.
+ */
+:root {
+  interpolate-size: allow-keywords;
+}
+.faq-item::details-content {
+  block-size: 0;
+  overflow: hidden;
+  transition:
+    block-size 0.35s var(--ease-out-soft),
+    content-visibility 0.35s allow-discrete;
+}
+.faq-item[open]::details-content {
+  block-size: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-dialog[open] {
+    animation: none;
+  }
+  .faq-item::details-content {
+    transition: none;
   }
 }

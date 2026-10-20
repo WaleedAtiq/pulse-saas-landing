@@ -83,7 +83,7 @@ export default function Integrations() {
           <a href="#" className="btn-ghost">
             Browse all 120+ integrations <span aria-hidden="true">→</span>
           </a>
-          <p className="mt-4 text-[11px] text-faint/70">Integration names are fictional — concept build.</p>
+          <p className="mt-4 text-[11px] text-faint">Integration names are fictional — concept build.</p>
         </div>
       </div>
     </section>
