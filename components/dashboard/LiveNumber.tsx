@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
+import { loadGsap } from "@/lib/gsap";
 import { formatValue, type NumberFormat } from "@/lib/format";
 
 type Props = {
@@ -25,6 +25,8 @@ type Props = {
  *   [data-count] counters.
  * - Math.random() is fine HERE because it only runs in the browser, after the
  *   page has loaded. (It must never run during render — see mockData.ts.)
+ * - GSAP is loaded after the page paints (lib/gsap.ts). Until it arrives,
+ *   ticks simply jump to the new number instead of tweening.
  */
 export default function LiveNumber({ value, format = "number", interval = 1600, minStep = -4, maxStep = 11 }: Props) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -39,10 +41,17 @@ export default function LiveNumber({ value, format = "number", interval = 1600, 
       el.textContent = formatValue(counter.n, format);
     };
 
+    let gsap: Awaited<ReturnType<typeof loadGsap>>["gsap"] | undefined; // set once GSAP has loaded
+    let cancelled = false;
+
     // 1. Count up from 0 on load (skipped for reduced motion)
     if (!reduceMotion) {
       render(); // show 0 straight away
-      gsap.to(counter, { n: value, duration: 1.8, delay: 0.4, ease: "power3.out", onUpdate: render });
+      loadGsap().then((modules) => {
+        if (cancelled) return;
+        gsap = modules.gsap;
+        gsap.to(counter, { n: value, duration: 1.8, delay: 0.4, ease: "power3.out", onUpdate: render });
+      });
     }
 
     // 2. Drift a little every `interval` ms
@@ -58,7 +67,7 @@ export default function LiveNumber({ value, format = "number", interval = 1600, 
       window.clearTimeout(flashTimer);
       flashTimer = window.setTimeout(() => delete el.dataset.trend, 450);
 
-      if (reduceMotion) {
+      if (reduceMotion || !gsap) {
         counter.n = target;
         render();
       } else {
@@ -71,7 +80,8 @@ export default function LiveNumber({ value, format = "number", interval = 1600, 
     return () => {
       window.clearInterval(ticker);
       window.clearTimeout(flashTimer);
-      gsap.killTweensOf(counter);
+      cancelled = true;
+      gsap?.killTweensOf(counter);
     };
   }, [value, format, interval, minStep, maxStep]);
 

@@ -8,6 +8,10 @@ const TRUST_POINTS = ["Free up to 10M events", "No credit card", "5-minute setup
  * (stacked on mobile). Everything fades up in sequence on load using the
  * `animate-rise` utility from globals.css — each element just gets a slightly
  * later animation-delay, which is what creates the "cascade".
+ *
+ * The headline and subcopy use `animate-lift` instead: same slide, no fade, so
+ * the most important text is on screen from the very first frame (that's
+ * what the Largest Contentful Paint speed metric measures).
  */
 export default function Hero() {
   return (
@@ -37,13 +41,13 @@ export default function Hero() {
           </a>
 
           <h1
-            className="animate-rise text-[clamp(40px,5.4vw,66px)] font-semibold leading-[1.02] tracking-[-0.04em]"
+            className="animate-lift text-[clamp(40px,5.4vw,66px)] font-semibold leading-[1.02] tracking-[-0.04em]"
             style={{ animationDelay: "80ms" }}
           >
             Understand every user, <span className="text-gradient">in real time.</span>
           </h1>
 
-          <p className="lead animate-rise mt-6" style={{ animationDelay: "160ms" }}>
+          <p className="lead animate-lift mt-6" style={{ animationDelay: "160ms" }}>
             PULSE turns raw product events into funnels, retention curves and live dashboards your whole team can
             read — no SQL, no waiting on the data team.
           </p>

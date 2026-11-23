@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
+import { loadGsap } from "@/lib/gsap";
 
 /*
  * A number that tweens to its new value whenever `value` changes
@@ -13,6 +13,9 @@ import gsap from "gsap";
  *    React and the tween never fight over the text.
  *  - `shown` remembers the number currently on screen, so each tween starts
  *    from wherever the last one stopped — even if the visitor toggles quickly.
+ *
+ * GSAP is loaded on demand (lib/gsap.ts); by the time anyone clicks the
+ * billing toggle it's long since downloaded, so the tween starts instantly.
  */
 export default function AnimatedPrice({ value }: { value: number }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -34,9 +37,16 @@ export default function AnimatedPrice({ value }: { value: number }) {
       return;
     }
 
-    const tween = gsap.to(counter, { n: value, duration: 0.5, ease: "power2.out", onUpdate: render });
+    let cancelled = false;
+    let kill: (() => void) | undefined;
+    loadGsap().then(({ gsap }) => {
+      if (cancelled) return;
+      const tween = gsap.to(counter, { n: value, duration: 0.5, ease: "power2.out", onUpdate: render });
+      kill = () => tween.kill();
+    });
     return () => {
-      tween.kill(); // a new toggle interrupts this tween; the next starts from counter.n
+      cancelled = true;
+      kill?.(); // a new toggle interrupts this tween; the next starts from counter.n
     };
   }, [value]);
 

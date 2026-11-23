@@ -59,6 +59,11 @@
   /* Load-in animations → `animate-rise`, `animate-feed-in`.
      Stagger them by setting animation-delay inline on each element. */
   --animate-rise: rise 0.9s var(--ease-out-soft) both;
+  /* Like rise, but WITHOUT the fade — for the hero headline + subcopy. Text
+     that starts at opacity 0 doesn't count as "painted", so the browser's
+     Largest Contentful Paint (the main speed metric) waited for the fade.
+     Visible from the first frame, it's painted immediately; the slide stays. */
+  --animate-lift: lift 0.9s var(--ease-out-soft) both;
   --animate-feed-in: feed-in 0.5s var(--ease-out-soft) both;
   --animate-swap: swap 0.5s var(--ease-out-soft) both; /* feature tab content */
   --animate-marquee: marquee 45s linear infinite; /* integrations rows */
@@ -72,6 +77,11 @@
     to {
       opacity: 1;
       transform: none;
+    }
+  }
+  @keyframes lift {
+    from {
+      transform: translateY(24px);
     }
   }
   /* The marquee track holds the tiles TWICE. Sliding it left by exactly half
@@ -566,6 +576,7 @@ body {
     transition: none !important;
   }
   .animate-rise,
+  .animate-lift,
   .animate-feed-in,
   .animate-swap,
   .animate-marquee,
